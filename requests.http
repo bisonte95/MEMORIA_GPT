@@ -1,0 +1,52 @@
+### Crear parche de tarifa
+POST http://localhost:8000/patch_tariff
+Content-Type: application/json
+
+{
+  "route_from": "MAD",
+  "route_to": "BCN",
+  "service_type": "groupage",
+  "weight_range": {"min": 0, "max": 1000},
+  "target_field": "precio",
+  "operacion": "percent_up",
+  "valor": 5,
+  "nota": "Incremento temporal",
+  "autor": "operaciones"
+}
+
+### Calcular tarifa
+POST http://localhost:8000/get_tariff
+Content-Type: application/json
+
+{
+  "origen": "MAD",
+  "destino": "BCN",
+  "tipo_servicio": "groupage",
+  "peso": 500,
+  "precio_base": 1000
+}
+
+### Añadir nota operativa
+POST http://localhost:8000/add_note
+Content-Type: application/json
+
+{
+  "origen": "MAD",
+  "destino": "BCN",
+  "empresa": "TransMAD",
+  "categoria": "incidencia",
+  "gravedad": "media",
+  "nota": "Retrasos por obras",
+  "fecha": "2025-10-10"
+}
+
+### Ingestar albaran (requiere albaran.json en la misma carpeta)
+POST http://localhost:8000/ingest_albaran
+Content-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150
+
+-----------------------------735323031399963166993862150
+Content-Disposition: form-data; name="file"; filename="albaran.json"
+Content-Type: application/json
+
+@albaran.json
+-----------------------------735323031399963166993862150--
