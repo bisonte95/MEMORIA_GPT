@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: Memoria tarifas
+  version: '1.0'
+servers:
+  - url: http://localhost:8000
+paths:
+  /get_tariff:
+    post:
+      summary: Devuelve el precio final aplicando los parches vigentes y devuelve avisos
+      operationId: getTariff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTariffRequest'
+      responses:
+        '200':
+          description: Resultado de tarifa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTariffResponse'
+  /patch_tariff:
+    post:
+      summary: Inserta un parche de tarifa sin tocar los Excel originales
+      operationId: patchTariff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTariffRequest'
+      responses:
+        '200':
+          description: Parche guardado
+  /add_note:
+    post:
+      summary: Inserta una nota o incidencia operativa
+      operationId: addNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddNoteRequest'
+      responses:
+        '200':
+          description: Nota almacenada
+  /ingest_albaran:
+    post:
+      summary: Ingesta un albaran en formato JSON (cabecera + lineas) como multipart/form-data
+      operationId: ingestAlbaran
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Albaran procesado
+components:
+  schemas:
+    WeightRange:
+      type: object
+      properties:
+        min:
+          type: number
+          format: float
+        max:
+          type: number
+          format: float
+    PatchTariffRequest:
+      type: object
+      required:
+        - route_from
+        - route_to
+        - service_type
+        - target_field
+        - operacion
+        - valor
+      properties:
+        route_from:
+          type: string
+        route_to:
+          type: string
+        service_type:
+          type: string
+          enum: [groupage, FTL, LTL, otro]
+        weight_range:
+          $ref: '#/components/schemas/WeightRange'
+        target_field:
+          type: string
+          enum: [precio, recargo_fuel]
+        operacion:
+          type: string
+          enum: [set, percent_up, percent_down, add, subtract]
+        valor:
+          type: number
+        efectivo_desde:
+          type: string
+          format: date
+          nullable: true
+        efectivo_hasta:
+          type: string
+          format: date
+          nullable: true
+        nota:
+          type: string
+          nullable: true
+        autor:
+          type: string
+          nullable: true
+    AddNoteRequest:
+      type: object
+      required:
+        - origen
+        - destino
+        - categoria
+        - gravedad
+        - nota
+      properties:
+        origen:
+          type: string
+        destino:
+          type: string
+        empresa:
+          type: string
+          nullable: true
+        categoria:
+          type: string
+          enum: [incidencia, preferencia, veto, SLA, otro]
+        gravedad:
+          type: string
+          enum: [baja, media, alta]
+        nota:
+          type: string
+        fecha:
+          type: string
+          format: date
+          nullable: true
+        autor:
+          type: string
+          nullable: true
+    GetTariffRequest:
+      type: object
+      required:
+        - origen
+        - destino
+        - tipo_servicio
+        - peso
+      properties:
+        origen:
+          type: string
+        destino:
+          type: string
+        tipo_servicio:
+          type: string
+          enum: [groupage, FTL, LTL, otro]
+        peso:
+          type: number
+        fecha:
+          type: string
+          format: date
+          nullable: true
+        precio_base:
+          type: number
+          format: float
+          description: Precio calculado previamente desde los Excel
+        session_id:
+          type: string
+          nullable: true
+        usuario:
+          type: string
+          nullable: true
+        empresa_elegida:
+          type: string
+          nullable: true
+    TariffNote:
+      type: object
+      properties:
+        empresa:
+          type: string
+          nullable: true
+        categoria:
+          type: string
+        gravedad:
+          type: string
+        nota:
+          type: string
+        fecha:
+          type: string
+          format: date
+          nullable: true
+        ts:
+          type: string
+          description: Timestamp de insercion
+    TariffPatch:
+      type: object
+      properties:
+        campo_objetivo:
+          type: string
+        operacion:
+          type: string
+        valor:
+          type: number
+        nota:
+          type: string
+          nullable: true
+        autor:
+          type: string
+          nullable: true
+        ts:
+          type: string
+          description: Timestamp de insercion
+    GetTariffResponse:
+      type: object
+      properties:
+        precio_base:
+          type: number
+        precio_final:
+          type: number
+        parches_aplicados:
+          type: array
+          items:
+            $ref: '#/components/schemas/TariffPatch'
+        avisos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TariffNote'
